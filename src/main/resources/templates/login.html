@@ -1,0 +1,18 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Login - Betriebsrente Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-slate-900 h-screen flex items-center justify-center">
+<div class="bg-white rounded-lg p-8 w-96 shadow-xl">
+  <h1 class="text-xl font-bold mb-2">Betriebsrente Bot</h1>
+  <p class="text-xs text-slate-500 mb-6">Intern - nur Team & Fachbereich<br/>Docker lokal</p>
+  <form method="post" action="/login" class="space-y-4">
+    <div><label class="text-xs font-semibold">Benutzer</label><input name="username" class="w-full border rounded p-2 text-sm" placeholder="team oder fachbereich" required/></div>
+    <div><label class="text-xs font-semibold">Passwort</label><input type="password" name="password" class="w-full border rounded p-2 text-sm" required/></div>
+    <button class="w-full bg-blue-600 text-white py-2 rounded font-semibold">Anmelden</button>
+  </form>
+  <div class="mt-6 text-xs bg-slate-50 p-3 rounded border">
+    <b>Rollen:</b><br/>
+    <span class="font-mono">team / Willkommen2024!</span> → Rolle USER (nur Chat)<br/>
+    <span class="font-mono">fachbereich / Betriebsrente2024!</span> → Rolle ADMIN (Chat + Upload + OCR)
+  </div>
+  <p class="text-xs text-slate-400 mt-3">Passwörter in application.yml änderbar. Für Produktion an LDAP / GitLab SSO anbinden.</p>
+</div>
+</body></html>
