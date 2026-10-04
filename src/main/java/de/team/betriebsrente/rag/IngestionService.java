@@ -26,14 +26,20 @@ public class IngestionService {
 
     @Transactional
     public void ingestFromJson(File jsonFile) throws Exception {
-        List<Map<String, String>> entries = mapper.readValue(jsonFile, new TypeReference<>() {
+        List<Map<String, Object>> entries = mapper.readValue(jsonFile, new TypeReference<>() {
         });
-        for (Map<String, String> e : entries) {
+        for (Map<String, Object> e : entries) {
             Fachwissen fw = new Fachwissen();
-            fw.setTitel(e.get("titel"));
-            fw.setKategorie(e.get("kategorie"));
-            fw.setOriginalText(e.get("original_text"));
-            fw.setQuelle(e.getOrDefault("quelle", "intern"));
+            String title = requiredString(e, "titel");
+            String category = requiredString(e, "kategorie");
+            String originalText = e.get("original_text") == null
+                    ? "Titel: " + title + "\nKategorie: " + category
+                    : requiredString(e, "original_text");
+            String searchableText = searchableText(originalText, e.get("training_phrases"));
+            fw.setTitel(title);
+            fw.setKategorie(category);
+            fw.setOriginalText(originalText);
+            fw.setQuelle(e.containsKey("quelle") ? requiredString(e, "quelle") : "intern");
             em.persist(fw);
             em.flush();
             Map<String, Object> meta = new HashMap<>();
@@ -41,8 +47,34 @@ public class IngestionService {
             meta.put("titel", fw.getTitel());
             meta.put("kategorie", fw.getKategorie());
             meta.put("quelle", fw.getQuelle());
-            List<Document> chunks = chunkingService.chunk(fw.getOriginalText(), meta);
+            List<Document> chunks = chunkingService.chunk(searchableText, meta);
             vectorStore.add(chunks);
         }
+    }
+
+    private String requiredString(Map<String, Object> entry, String key) {
+        Object value = entry.get(key);
+        if (value instanceof String text) {
+            return text;
+        }
+        throw new IllegalArgumentException("Missing or non-string seed field: " + key);
+    }
+
+    private String searchableText(String originalText, Object trainingPhrases) {
+        if (trainingPhrases == null) {
+            return originalText;
+        }
+        if (!(trainingPhrases instanceof List<?> phrases)) {
+            throw new IllegalArgumentException("Seed field training_phrases must be an array");
+        }
+        List<String> values = new ArrayList<>();
+        for (Object phrase : phrases) {
+            if (!(phrase instanceof String text)) {
+                throw new IllegalArgumentException("Seed field training_phrases must contain only strings");
+            }
+            values.add(text);
+        }
+        return values.isEmpty() ? originalText
+                : originalText + "\n\nBeispielfragen:\n" + String.join("\n", values);
     }
 }

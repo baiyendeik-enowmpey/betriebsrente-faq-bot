@@ -12,6 +12,8 @@ services:
       interval: 5s
   ollama:
     image: ollama/ollama:latest
+    environment:
+      OLLAMA_LOAD_TIMEOUT: 10m
     ports: ["11434:11434"]
     volumes: [ollama_data:/root/.ollama]
   app:

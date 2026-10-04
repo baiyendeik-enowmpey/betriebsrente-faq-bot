@@ -35,7 +35,8 @@ public class RagService {
                 }
 
                 // Wenn Filter gesetzt, nach kategorie filtern
-                if (kategorieFilter != null && !kategorieFilter.isBlank()) {
+                if (kategorieFilter != null && !kategorieFilter.isBlank()
+                                && !"Alle".equalsIgnoreCase(kategorieFilter)) {
                         docs = docs.stream()
                                         .filter(d -> kategorieFilter
                                                         .equalsIgnoreCase((String) d.getMetadata().get("kategorie")))

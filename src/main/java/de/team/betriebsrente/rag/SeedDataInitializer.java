@@ -4,8 +4,6 @@ import jakarta.persistence.EntityManager;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-
 import java.io.File;
 
 @Configuration
@@ -18,38 +16,27 @@ public class SeedDataInitializer {
                 Long count = (Long) em.createQuery("SELECT COUNT(f) FROM Fachwissen f").getSingleResult();
                 if (count == 0) {
                     System.out.println("=== Keine Fachdaten vorhanden - importiere Seed Daten ===");
-                    // versuche aus verschiedenen Pfaden
                     String[] paths = {
                             "testdaten/fachwissen_seed.json",
                             "/app/testdaten/fachwissen_seed.json",
                             "src/main/resources/testdaten/fachwissen_seed.json"
                     };
                     for (String p : paths) {
-                        try {
-                            File f = new ClassPathResource("testdaten/fachwissen_seed.json").getFile();
-                            if (f.exists()) {
-                                ingestionService.ingestFromJson(f);
-                                System.out.println("Seed Import aus ClassPath erfolgreich: " + f.getAbsolutePath());
-                                return;
-                            }
-                        } catch (Exception e) {
-                        }
-                        try {
-                            File f2 = new File(p);
-                            if (f2.exists()) {
-                                ingestionService.ingestFromJson(f2);
-                                System.out.println("Seed Import erfolgreich: " + p);
-                                return;
-                            }
-                        } catch (Exception e) {
+                        File seedFile = new File(p);
+                        if (seedFile.isFile()) {
+                            ingestionService.ingestFromJson(seedFile);
+                            System.out.println("Seed Import erfolgreich: " + seedFile.getAbsolutePath());
+                            return;
                         }
                     }
                     System.out.println("Kein Seed File gefunden - bitte manuell über /admin hochladen");
                 } else {
                     System.out.println("Fachwissen vorhanden: " + count + " Einträge");
                 }
+            } catch (RuntimeException e) {
+                throw e;
             } catch (Exception e) {
-                System.out.println("Seed Check Fehler: " + e.getMessage());
+                throw new IllegalStateException("Seed-Daten konnten nicht geladen werden", e);
             }
         };
     }
