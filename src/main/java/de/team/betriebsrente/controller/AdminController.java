@@ -33,9 +33,6 @@ public class AdminController {
         List<Fachwissen> list = em.createQuery("SELECT f FROM Fachwissen f ORDER BY f.createdAt DESC", Fachwissen.class)
                 .setMaxResults(50).getResultList();
         model.addAttribute("dokumente", list);
-        long count = (Long) em
-                .createQuery("SELECT COUNT(c) FROM Fachwissen f JOIN FachwissenChunks c ON c.fachwissenId = f.id")
-                .getSingleResult();
         // fallback if view not mapped - use native
         try {
             Object cnt = em.createNativeQuery("SELECT COUNT(*) FROM fachwissen_chunks").getSingleResult();
