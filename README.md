@@ -45,6 +45,25 @@ docker compose up --build -d app
 
 Wait for the application to finish starting, then open <http://localhost:8080>. The login page is at <http://localhost:8080/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
 
+## UI-E2E-Test
+
+Der Playwright-Test verwendet Java, TestNG und Mockito. Er prüft den Login und den Chat im Browser; die Chat-Antwort wird über einen Mockito-Stub simuliert, damit der Test kein Ollama-Modell benötigt. PostgreSQL und die App müssen laufen.
+
+```powershell
+$env:E2E_USERNAME = "team"
+$env:E2E_PASSWORD = "Willkommen2024!"
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+mvn -Pe2e -Dexec.mainClass=org.testng.TestNG "-Dexec.args=-testclass de.team.betriebsrente.e2e.ChatUiE2ETest" -Dexec.classpathScope=test test-compile exec:java
+```
+
+Playwright benötigt Chromium. Einmalig installieren:
+
+```powershell
+mvn -Pe2e -Dexec.mainClass=com.microsoft.playwright.CLI "-Dexec.args=install chromium" -Dexec.classpathScope=test exec:java
+```
+
+Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8080`).>. The login page is at <http://localhost:8080/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
+
 ### Default local accounts
 
 | Role | Username | Password | Access |
