@@ -11,5 +11,5 @@ RUN apt-get update && apt-get install -y tesseract-ocr tesseract-ocr-deu tessera
 WORKDIR /app
 COPY testdaten/fachwissen_seed.json ./testdaten/fachwissen_seed.json
 COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8090
 ENTRYPOINT ["java","-jar","app.jar"]

@@ -43,7 +43,7 @@ Build and start the application:
 docker compose up --build -d app
 ```
 
-Wait for the application to finish starting, then open <http://localhost:8080>. The login page is at <http://localhost:8080/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
+Wait for the application to finish starting, then open <http://localhost:8090>. The login page is at <http://localhost:8090/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
 
 ## UI-E2E-Tests
 
@@ -70,7 +70,7 @@ Playwright benötigt Chromium. Einmalig installieren:
 mvn -Pe2e -Dexec.mainClass=com.microsoft.playwright.CLI "-Dexec.args=install chromium" -Dexec.classpathScope=test exec:java
 ```
 
-Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8080`).
+Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8090`).
 
 ### Default local accounts
 
@@ -105,7 +105,7 @@ This permanently deletes local database contents and downloaded Ollama models.
 2. Select a category or leave the category set to **Alle**.
 3. Enter a question in German and submit it.
 4. Review the answer and the source passages shown beside the chat.
-5. Sign in with the administrator account and visit <http://localhost:8080/admin> to upload or remove knowledge documents.
+5. Sign in with the administrator account and visit <http://localhost:8090/admin> to upload or remove knowledge documents.
 
 Text is extracted from PDFs and Word documents before indexing. A scanned PDF without an embedded text layer may not contain enough extractable text for upload; the admin page reports this case.
 
@@ -120,7 +120,7 @@ docker compose exec -T ollama ollama pull nomic-embed-text
 mvn spring-boot:run
 ```
 
-The default local configuration connects to PostgreSQL at `localhost:5432` and Ollama at `localhost:11434`. The seed importer checks the project-relative `testdaten/fachwissen_seed.json` file.
+The default local configuration connects to PostgreSQL at `localhost:5444` and Ollama at `localhost:11434`. The seed importer checks the project-relative `testdaten/fachwissen_seed.json` file.
 
 ## Configuration
 
@@ -128,7 +128,7 @@ Default settings are in `src/main/resources/application.yml`; the Compose servic
 
 | Setting | Default |
 | --- | --- |
-| Application URL | `http://localhost:8080` |
+| Application URL | `http://localhost:8090` |
 | PostgreSQL database | `betriebsrente` |
 | PostgreSQL user | `botuser` |
 | Chat model | `llama3.2:3b` |

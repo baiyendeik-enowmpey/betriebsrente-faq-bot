@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 
 public class AdminUiE2ETest {
     private static final String BASE_URL = System.getProperty("e2e.baseUrl",
-            System.getenv().getOrDefault("E2E_BASE_URL", "http://localhost:8080"));
+            System.getenv().getOrDefault("E2E_BASE_URL", "http://localhost:8090"));
     private static final String ADMIN_USERNAME = System.getenv().getOrDefault("E2E_ADMIN_USERNAME", "fachbereich");
     private static final String ADMIN_PASSWORD = System.getenv().getOrDefault("E2E_ADMIN_PASSWORD",
             "Betriebsrente2024!");

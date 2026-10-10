@@ -3,7 +3,7 @@
     {
       "type": "promptString",
       "id": "postgres-url",
-      "description": "PostgreSQL connection URL for the local betriebsrente database (postgresql://user:password@localhost:5432/betriebsrente)",
+      "description": "PostgreSQL connection URL for the local betriebsrente database (postgresql://user:password@localhost:5444/betriebsrente)",
       "password": true
     }
   ],

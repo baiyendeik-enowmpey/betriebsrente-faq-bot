@@ -30,7 +30,7 @@ public class ChatUiE2ETest {
     private static final String QUESTION = "Wie wird Einmalkapital versteuert?";
     private static final String ANSWER = "Die Testantwort zur Besteuerung.";
     private static final String BASE_URL = System.getProperty("e2e.baseUrl",
-            System.getenv().getOrDefault("E2E_BASE_URL", "http://localhost:8080"));
+            System.getenv().getOrDefault("E2E_BASE_URL", "http://localhost:8090"));
 
     private Playwright playwright;
     private Browser browser;

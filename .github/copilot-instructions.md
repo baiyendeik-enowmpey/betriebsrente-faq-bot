@@ -10,13 +10,13 @@ This repository is a Spring Boot application with a Maven build. There is no ded
   - `docker exec -it $(docker ps -qf name=ollama) ollama pull nomic-embed-text`
   - `docker compose up --build app`
   - `docker compose exec app java -jar app.jar --import=testdaten/fachwissen_seed.json`
-- App URL: `http://localhost:8080`
+- App URL: `http://localhost:8090`
 - Build/test commands:
   - `mvn test`
   - `mvn -Dtest=de.team.betriebsrente.rag.RagServiceTest test` for a single test class
   - `mvn -Dtest=RagServiceTest#ask test` for a single test method when the method name is known
   - `mvn package -DskipTests` for a packaging build without running tests
-  - UI E2E (requires the app running at `http://localhost:8080` and Playwright Chromium installed):
+  - UI E2E (requires the app running at `http://localhost:8090` and Playwright Chromium installed):
     - `mvn -Pe2e -Dexec.mainClass=com.microsoft.playwright.CLI "-Dexec.args=install chromium" -Dexec.classpathScope=test exec:java` (one-time browser setup)
     - PowerShell: `$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD="1"; mvn -Pe2e -Dexec.mainClass=org.testng.TestNG "-Dexec.args=-testclass de.team.betriebsrente.e2e.ChatUiE2ETest" -Dexec.classpathScope=test test-compile exec:java`
     - Set `E2E_BASE_URL` to target a different app URL; login can be overridden with `E2E_USERNAME` and `E2E_PASSWORD`.
@@ -30,7 +30,7 @@ This project is a Spring Boot FAQ assistant for Betriebsrente questions. The app
 - `src/main/java/de/team/betriebsrente/rag/`: retrieval logic and ingestion pipeline (`RagService`, `IngestionService`, `ChunkingService`, OCR/PDF parsing, audit export, seed-data initializer).
 - `src/main/java/de/team/betriebsrente/model/`: JPA entities such as `Fachwissen` that store the source knowledge in the database.
 - `src/main/resources/application.yml`: main runtime configuration for PostgreSQL, Flyway, pgvector, Ollama, and app-level security defaults.
-- `docker-compose.yml`: composes the PostgreSQL + pgvector database and the Ollama runtime; the app service depends on them and exposes port 8080.
+- `docker-compose.yml`: composes the PostgreSQL + pgvector database and the Ollama runtime; the app service depends on them and exposes port 8090.
 
 The main data flow is: JSON knowledge seed -> `IngestionService` -> persisted `Fachwissen` rows plus vector chunks -> `RagService` similarity search -> prompt assembly with source metadata -> final answer from Ollama.
 
