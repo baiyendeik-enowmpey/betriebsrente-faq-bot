@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.team.betriebsrente.model.Fachwissen;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import java.io.File;
 import java.util.*;
@@ -29,6 +29,9 @@ public class IngestionService {
         List<Map<String, Object>> entries = mapper.readValue(jsonFile, new TypeReference<>() {
         });
         for (Map<String, Object> e : entries) {
+            if (e == null) {
+                throw new IllegalArgumentException("Each seed entry must be a JSON object");
+            }
             Fachwissen fw = new Fachwissen();
             String title = requiredString(e, "titel");
             String category = requiredString(e, "kategorie");
@@ -47,12 +50,12 @@ public class IngestionService {
             meta.put("titel", fw.getTitel());
             meta.put("kategorie", fw.getKategorie());
             meta.put("quelle", fw.getQuelle());
-            List<Document> chunks = chunkingService.chunk(searchableText, meta);
-            vectorStore.add(chunks);
+            vectorStore.add(chunkingService.chunk(searchableText, meta));
         }
     }
 
-    private String requiredString(Map<String, Object> entry, String key) {
+    @NonNull
+    private String requiredString(@NonNull Map<String, Object> entry, @NonNull String key) {
         Object value = entry.get(key);
         if (value instanceof String text) {
             return text;
@@ -60,7 +63,9 @@ public class IngestionService {
         throw new IllegalArgumentException("Missing or non-string seed field: " + key);
     }
 
-    private String optionalString(Map<String, Object> entry, String key, String fallback) {
+    @NonNull
+    private String optionalString(@NonNull Map<String, Object> entry, @NonNull String key,
+            @NonNull String fallback) {
         Object value = entry.get(key);
         if (value == null) {
             return fallback;
@@ -71,7 +76,8 @@ public class IngestionService {
         throw new IllegalArgumentException("Seed field " + key + " must be a string");
     }
 
-    private String searchableText(String originalText, Object trainingPhrases) {
+    @NonNull
+    private String searchableText(@NonNull String originalText, Object trainingPhrases) {
         if (trainingPhrases == null) {
             return originalText;
         }

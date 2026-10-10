@@ -54,7 +54,8 @@ public class AdminController {
         Map<String, Object> resp = new HashMap<>();
         try {
             var parsed = parser.parse(file);
-            if (parsed.text().length() < 50) {
+            String parsedText = Objects.requireNonNullElse(parsed.text(), "");
+            if (parsedText.length() < 50) {
                 resp.put("error", "Datei enthält zu wenig Text - gescanntes PDF? Bitte OCR vorher.");
                 return resp;
             }
@@ -62,7 +63,7 @@ public class AdminController {
             fw.setTitel((titel == null || titel.isBlank()) ? parsed.fileName() : titel);
             fw.setKategorie(kategorie);
             fw.setQuelle(quelle.isBlank() ? parsed.fileName() : quelle);
-            fw.setOriginalText(parsed.text());
+            fw.setOriginalText(parsedText);
             fw.setErstelltVon("admin-upload");
             em.persist(fw);
             em.flush();
@@ -74,16 +75,16 @@ public class AdminController {
             meta.put("quelle", fw.getQuelle());
             meta.put("fileName", parsed.fileName());
 
-            List<Document> chunks = chunking.chunk(parsed.text(), meta);
+            List<Document> chunks = chunking.chunk(parsedText, meta);
             vectorStore.add(chunks);
 
             resp.put("success", true);
             resp.put("titel", fw.getTitel());
-            resp.put("chars", parsed.text().length());
+            resp.put("chars", parsedText.length());
             resp.put("chunks", chunks.size());
             resp.put("pages", parsed.pages());
             resp.put("message", String.format("'%s' importiert: %d Zeichen -> %d Chunks (650 Tokens, 20%% Overlap)",
-                    fw.getTitel(), parsed.text().length(), chunks.size()));
+                    fw.getTitel(), parsedText.length(), chunks.size()));
         } catch (Exception e) {
             e.printStackTrace();
             resp.put("error", e.getMessage());

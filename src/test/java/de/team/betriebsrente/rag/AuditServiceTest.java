@@ -1,10 +1,8 @@
 package de.team.betriebsrente.rag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import de.team.betriebsrente.model.AuditLog;
 import de.team.betriebsrente.model.ChatHistory;

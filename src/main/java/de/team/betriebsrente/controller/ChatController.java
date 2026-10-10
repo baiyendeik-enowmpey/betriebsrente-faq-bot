@@ -30,10 +30,13 @@ public class ChatController {
         var result = ragService.ask(body.get("frage"), body.get("kategorie"));
         Map<String, Object> resp = new HashMap<>();
         resp.put("antwort", result.antwort());
-        resp.put("quellen", result.quellen().stream().map(d -> Map.of(
-                "titel", d.getMetadata().getOrDefault("titel", "-"),
-                "kategorie", d.getMetadata().getOrDefault("kategorie", "-"),
-                "text", d.getText().substring(0, Math.min(400, d.getText().length())) + "...")).toList());
+        resp.put("quellen", result.quellen().stream().map(d -> {
+            String text = Objects.requireNonNullElse(d.getText(), "");
+            return Map.of(
+                    "titel", d.getMetadata().getOrDefault("titel", "-"),
+                    "kategorie", d.getMetadata().getOrDefault("kategorie", "-"),
+                    "text", text.substring(0, Math.min(400, text.length())) + "...");
+        }).toList());
         return resp;
     }
 }

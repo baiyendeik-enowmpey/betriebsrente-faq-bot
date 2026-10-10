@@ -3,6 +3,7 @@ package de.team.betriebsrente.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -25,6 +26,7 @@ import org.springframework.mock.web.MockMultipartFile;
 class AdminControllerTest {
 
     @Test
+    @SuppressWarnings("null") // Mockito's generic matchers are not annotated for Spring AI's @NonNull parameters.
     void uploadPersistsDocumentAndAddsChunks() throws Exception {
         DocumentParserService parser = mock(DocumentParserService.class);
         ChunkingService chunking = mock(ChunkingService.class);
@@ -46,7 +48,7 @@ class AdminControllerTest {
         assertEquals("guide.txt", result.get("titel"));
         assertEquals(1, result.get("chunks"));
         verify(entityManager).flush();
-        verify(vectorStore).add(any());
+        verify(vectorStore).add(anyList());
     }
 
     @Test

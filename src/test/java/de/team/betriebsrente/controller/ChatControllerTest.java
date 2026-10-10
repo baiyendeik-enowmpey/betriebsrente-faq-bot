@@ -1,8 +1,6 @@
 package de.team.betriebsrente.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -10,6 +8,7 @@ import static org.mockito.Mockito.when;
 import de.team.betriebsrente.rag.RagService;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.security.core.Authentication;
@@ -30,7 +29,7 @@ class ChatControllerTest {
         assertEquals("chat", view);
         assertEquals(List.of("Auszahlung", "Steuer", "Unverfallbarkeit", "Arbeitgeberwechsel", "Alle"),
                 model.getAttribute("kategorien"));
-        assertTrue((Boolean) model.getAttribute("isAdmin"));
+        assertEquals(Boolean.TRUE, model.getAttribute("isAdmin"));
     }
 
     @Test
@@ -41,14 +40,15 @@ class ChatControllerTest {
 
         new ChatController(mock(RagService.class)).index(model, authentication);
 
-        assertFalse((Boolean) model.getAttribute("isAdmin"));
+        assertEquals(Boolean.FALSE, model.getAttribute("isAdmin"));
     }
 
     @Test
     void chatReturnsAnswerAndTruncatedSourceText() {
         RagService ragService = mock(RagService.class);
-        String sourceText = "x".repeat(500);
-        Document source = new Document(sourceText, Map.of("titel", "Quelle", "kategorie", "Steuer"));
+        String sourceText = Objects.requireNonNull("x".repeat(500));
+        Document source = new Document(sourceText,
+                Objects.requireNonNull(Map.of("titel", "Quelle", "kategorie", "Steuer")));
         when(ragService.ask("Frage", "Steuer")).thenReturn(new RagService.Answer("Antwort", List.of(source)));
 
         Map<String, Object> result = new ChatController(ragService)

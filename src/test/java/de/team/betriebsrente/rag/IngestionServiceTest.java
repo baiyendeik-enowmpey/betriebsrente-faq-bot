@@ -2,6 +2,7 @@ package de.team.betriebsrente.rag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -14,6 +15,7 @@ import jakarta.persistence.EntityManager;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.ai.document.Document;
@@ -29,7 +31,7 @@ class IngestionServiceTest {
         VectorStore vectorStore = mock(VectorStore.class);
         ChunkingService chunking = mock(ChunkingService.class);
         EntityManager entityManager = mock(EntityManager.class);
-        when(chunking.chunk(anyString(), anyMap())).thenReturn(List.of(new Document("chunk")));
+        stubChunking(chunking);
         doAnswer(invocation -> {
             invocation.<Fachwissen>getArgument(0).setId(41L);
             return null;
@@ -42,10 +44,10 @@ class IngestionServiceTest {
         new IngestionService(vectorStore, chunking, entityManager).ingestFromJson(json.toFile());
 
         verify(entityManager).flush();
-        org.mockito.ArgumentCaptor<String> textCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(chunking).chunk(textCaptor.capture(), anyMap());
+        ArgumentCaptor<String> textCaptor = ArgumentCaptor.forClass(String.class);
+        verifyChunkingCapturedInput(chunking, textCaptor);
         org.junit.jupiter.api.Assertions.assertTrue(textCaptor.getValue().contains("How does the pension work?"));
-        verify(vectorStore).add(any());
+        verifyVectorStoreReceivedChunks(vectorStore);
         var captor = org.mockito.ArgumentCaptor.forClass(Fachwissen.class);
         verify(entityManager).persist(captor.capture());
         assertEquals("Guide", captor.getValue().getTitel());
@@ -58,7 +60,7 @@ class IngestionServiceTest {
         VectorStore vectorStore = mock(VectorStore.class);
         ChunkingService chunking = mock(ChunkingService.class);
         EntityManager entityManager = mock(EntityManager.class);
-        when(chunking.chunk(anyString(), anyMap())).thenReturn(List.of(new Document("chunk")));
+        stubChunking(chunking);
         doAnswer(invocation -> {
             invocation.<Fachwissen>getArgument(0).setId(42L);
             return null;
@@ -74,9 +76,25 @@ class IngestionServiceTest {
         verify(entityManager).persist(knowledgeCaptor.capture());
         assertEquals("Titel: Rentenversicherung\nKategorie: Beiträge",
                 knowledgeCaptor.getValue().getOriginalText());
-        org.mockito.ArgumentCaptor<String> textCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(chunking).chunk(textCaptor.capture(), anyMap());
+        ArgumentCaptor<String> textCaptor = ArgumentCaptor.forClass(String.class);
+        verifyChunkingCapturedInput(chunking, textCaptor);
         org.junit.jupiter.api.Assertions.assertTrue(textCaptor.getValue().contains("Wo melde ich den Beitragsnachweis?"));
-        verify(vectorStore).add(any());
+        verifyVectorStoreReceivedChunks(vectorStore);
+    }
+
+    // Mockito matchers and captors return null sentinels while setting up or verifying an invocation.
+    @SuppressWarnings("null")
+    private static void stubChunking(ChunkingService chunking) {
+        when(chunking.chunk(anyString(), anyMap())).thenReturn(List.of(new Document("chunk")));
+    }
+
+    @SuppressWarnings("null")
+    private static void verifyChunkingCapturedInput(ChunkingService chunking, ArgumentCaptor<String> textCaptor) {
+        verify(chunking).chunk(textCaptor.capture(), anyMap());
+    }
+
+    @SuppressWarnings("null")
+    private static void verifyVectorStoreReceivedChunks(VectorStore vectorStore) {
+        verify(vectorStore).add(anyList());
     }
 }
