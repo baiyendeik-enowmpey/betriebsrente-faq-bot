@@ -1,18 +1,30 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Login - Betriebsrente Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-slate-900 h-screen flex items-center justify-center">
-<div class="bg-white rounded-lg p-8 w-96 shadow-xl">
-  <h1 class="text-xl font-bold mb-2">Betriebsrente Bot</h1>
-  <p class="text-xs text-slate-500 mb-6">Intern - nur Team & Fachbereich<br/>Docker lokal</p>
-  <form method="post" th:action="@{/login}" class="space-y-4">
-    <div><label class="text-xs font-semibold">Benutzer</label><input name="username" class="w-full border rounded p-2 text-sm" placeholder="team oder fachbereich" required/></div>
-    <div><label class="text-xs font-semibold">Passwort</label><input type="password" name="password" class="w-full border rounded p-2 text-sm" required/></div>
-    <button class="w-full bg-blue-600 text-white py-2 rounded font-semibold">Anmelden</button>
-  </form>
-  <div class="mt-6 text-xs bg-slate-50 p-3 rounded border">
-    <b>Rollen:</b><br/>
-    <span class="font-mono">team / Willkommen2024!</span> → Rolle USER (nur Chat)<br/>
-    <span class="font-mono">fachbereich / Betriebsrente2024!</span> → Rolle ADMIN (Chat + Upload + OCR)
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anmelden · Renten-Fachbot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="login-page">
+<main class="login-card">
+  <div class="login-brand">
+    <div class="brand-mark" aria-hidden="true">BR</div>
+    <div><h1 class="login-title">Renten-Fachbot</h1><p class="login-intro">Intern · nur Team &amp; Fachbereich</p></div>
   </div>
-  <p class="text-xs text-slate-400 mt-3">Passwörter in application.yml änderbar. Für Produktion an LDAP / GitLab SSO anbinden.</p>
-</div>
-</body></html>
+  <h2 class="login-heading">Willkommen zurück</h2>
+  <p class="login-description">Melden Sie sich an, um auf den Fachwissen-Assistenten zuzugreifen.</p>
+  <form method="post" th:action="@{/login}">
+    <div class="login-field"><label class="field-label" for="username">Benutzer</label><input id="username" name="username" class="text-field" placeholder="Benutzername" autocomplete="username" required/></div>
+    <div class="login-field"><label class="field-label" for="password">Passwort</label><input id="password" type="password" name="password" class="text-field" placeholder="Passwort" autocomplete="current-password" required/></div>
+    <button class="button button-primary login-submit" type="submit">Anmelden</button>
+  </form>
+  <div class="roles-box">
+    <div class="roles-title">Zugriffsrollen</div>
+    <div><code>team / Willkommen2024!</code> → USER · Chat</div>
+    <div><code>fachbereich / Betriebsrente2024!</code> → ADMIN · Chat &amp; Dokumentenverwaltung</div>
+  </div>
+  <p class="login-footnote">Die Passwörter können in der Anwendungskonfiguration geändert werden. Für den Produktivbetrieb ist eine Anbindung an den Unternehmens-Login vorgesehen.</p>
+</main>
+</body>
+</html>

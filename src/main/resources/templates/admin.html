@@ -1,47 +1,94 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><title>Admin - Betriebsrente Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-slate-50 min-h-screen">
-<div class="max-w-6xl mx-auto p-6">
-  <div class="flex justify-between items-center mb-8">
-    <div><h1 class="text-2xl font-bold">Admin - Fachwissen pflegen</h1><p class="text-sm text-slate-500">Fachbereich lädt PDFs / Word hoch - kein JSON mehr nötig</p></div>
-    <a href="/" class="bg-white border px-4 py-2 rounded">← Zum Chat</a>
-  </div>
-
-  <div class="grid grid-cols-3 gap-4 mb-8">
-    <div class="bg-white p-4 rounded border"><div class="text-2xl font-bold" th:text="${docCount}">0</div><div class="text-xs text-slate-500">Dokumente</div></div>
-    <div class="bg-white p-4 rounded border"><div class="text-2xl font-bold" th:text="${chunkCount}">0</div><div class="text-xs text-slate-500">Chunks (650 Tokens, 20% Overlap)</div></div>
-    <div class="bg-white p-4 rounded border"><div class="text-xs">Letzter Import: <b id="lastImport">-</b></div><div class="text-xs mt-1 text-slate-400">Chunk Strategie: Recursive Split, HNSW Cosine 768dim</div></div>
-  </div>
-
-  <div class="bg-white rounded-lg border p-6 mb-8">
-    <h2 class="font-semibold mb-4">Neues Fachwissen hochladen</h2>
-    <form id="uploadForm" method="post" th:action="@{/admin/upload}" class="space-y-4" enctype="multipart/form-data">
-      <div class="border-2 border-dashed rounded-lg p-8 text-center hover:bg-slate-50 cursor-pointer" onclick="document.getElementById('file').click()">
-        <input type="file" id="file" name="file" accept=".pdf,.docx,.doc,.txt,.md" class="hidden" onchange="showFile(this)"/>
-        <div id="dropText"><p class="font-semibold">PDF / DOCX / TXT hierher ziehen oder klicken</p><p class="text-xs text-slate-400 mt-1">z.B. BetrAVG Auszahlungsrichtlinie, Steuer-Memo, interne FAQ</p></div>
-        <div id="fileName" class="hidden font-bold text-blue-600"></div>
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>Wissensbasis verwalten · Betriebsrente Bot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="workspace-shell">
+  <aside class="reference-sidebar">
+    <div class="reference-sidebar-head">
+      <div class="reference-brand">
+        <div class="reference-mark" aria-hidden="true">BR</div>
+        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
+        <span class="local-tag">Lokal · Docker</span>
       </div>
-      <div class="grid grid-cols-3 gap-4">
-        <div><label class="text-xs font-semibold">Titel (optional, sonst Dateiname)</label><input name="titel" class="w-full border rounded p-2 text-sm" placeholder="z.B. Direktzusage Auszahlung 2024"/></div>
-        <div><label class="text-xs font-semibold">Kategorie *</label><select name="kategorie" class="w-full border rounded p-2 text-sm"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
-        <div><label class="text-xs font-semibold">Quelle (Gesetz / Dokument)</label><input name="quelle" class="w-full border rounded p-2 text-sm" placeholder="z.B. BetrAVG §3, EStG §22, FB-Richtlinie"/></div>
-      </div>
-      <button id="uploadButton" type="submit" class="bg-blue-600 text-white px-6 py-2 rounded w-full font-semibold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait">
-        <svg id="uploadSpinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-        <span id="uploadButtonText">Importieren & Chunking starten</span>
-      </button>
-    </form>
-    <div id="status" class="mt-4 hidden p-3 rounded text-sm"></div>
-  </div>
+      <nav class="reference-tabs" aria-label="Bereiche">
+        <a class="reference-tab" th:href="@{/}">◉&nbsp; Chat</a>
+        <a class="reference-tab active" th:href="@{/admin}" aria-current="page">▤&nbsp; Wissen</a>
+      </nav>
+    </div>
 
-  <div class="bg-white rounded border">
-    <div class="p-4 border-b flex justify-between"><h2 class="font-semibold">Gespeicherte Dokumente</h2><span class="text-xs text-slate-400">DB: fachwissen + fachwissen_chunks + vector(768)</span></div>
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="p-2 text-left">Titel</th><th class="p-2">Kategorie</th><th class="p-2">Quelle</th><th class="p-2">Zeichen</th><th class="p-2">Aktion</th></tr></thead>
-      <tbody>
-        <tr th:each="d : ${dokumente}" class="border-t"><td class="p-2 font-medium" th:text="${d.titel}"></td><td class="p-2"><span class="bg-slate-100 px-2 py-1 rounded text-xs" th:text="${d.kategorie}"></span></td><td class="p-2 text-xs" th:text="${d.quelle}"></td><td class="p-2 text-xs" th:text="${#strings.length(d.originalText)}"></td><td class="p-2"><button th:attr="data-id=${d.id}" onclick="loeschen(this)" class="text-red-600 text-xs">Löschen</button></td></tr>
-      </tbody>
-    </table>
-  </div>
+    <section class="reference-section">
+      <span class="reference-section-title">Wissensverwaltung</span>
+      <p class="admin-sidebar-copy">Hier pflegen Sie das Fachwissen. Neue Dokumente sind nach dem Import in der Chat-Suche verfügbar.</p>
+      <div class="admin-sidebar-stats">
+        <div class="admin-sidebar-stat"><strong th:text="${docCount}">0</strong><span>Dokumente</span></div>
+        <div class="admin-sidebar-stat"><strong th:text="${chunkCount}">0</strong><span>Textabschnitte</span></div>
+      </div>
+      <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Unterstützt werden PDF, Word, Text und Markdown.</div>
+    </section>
+
+    <footer class="reference-footer">
+      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
+      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
+    </footer>
+  </aside>
+
+  <main class="reference-main">
+    <header class="reference-pagebar">
+      <h2>Wissensbasis verwalten</h2>
+      <span class="reference-live"><span class="status-dot"></span><span th:text="|${docCount} freigegeben|">0 freigegeben</span></span>
+    </header>
+
+    <div class="admin-reference-content">
+      <section class="surface-card admin-form-card">
+        <div class="admin-form-title"><div class="reference-mark" aria-hidden="true">＋</div><h3 class="section-heading">Neues Dokument anlegen</h3></div>
+        <p class="section-description" style="margin-top:10px">Dokument importieren und für den Chat durchsuchbar machen.</p>
+        <form id="uploadForm" method="post" th:action="@{/admin/upload}" enctype="multipart/form-data">
+          <label class="upload-drop" for="file">
+            <span aria-hidden="true" style="font-size:22px">↑</span>
+            <strong id="dropText">Datei auswählen oder hier ablegen</strong>
+            <span>PDF · DOCX · DOC · TXT · MD</span>
+            <input type="file" id="file" name="file" accept=".pdf,.docx,.doc,.txt,.md" hidden onchange="showFile(this)"/>
+            <span id="fileName" class="file-name hidden"></span>
+          </label>
+          <div class="form-grid">
+            <div class="form-field"><label class="field-label" for="titel">Titel <span style="font-weight:400;color:#a1a1aa">(optional)</span></label><input id="titel" name="titel" class="text-field" placeholder="z. B. BetrAVG Auszahlungsrichtlinie"/></div>
+            <div class="form-field"><label class="field-label" for="quelle">Quelle</label><input id="quelle" name="quelle" class="text-field" placeholder="z. B. BetrAVG § 3"/></div>
+            <div class="form-field"><label class="field-label" for="kategorie">Kategorie *</label><select id="kategorie" name="kategorie" class="select-field"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
+          </div>
+          <button id="uploadButton" type="submit" class="button button-primary upload-submit">
+            <svg id="uploadSpinner" class="hidden animate-spin" style="width:17px;height:17px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+            <span id="uploadButtonText">Importieren &amp; Chunking starten</span>
+          </button>
+        </form>
+        <div id="status" class="status-box hidden"></div>
+      </section>
+
+      <section class="documents-column">
+        <div class="documents-column-head">
+          <h3>Freigegebene Dokumente <span th:text="|(${docCount})|">(0)</span></h3>
+          <span class="eyebrow">Durchsuchbar im Bot</span>
+        </div>
+        <article class="document-card" th:each="d : ${dokumente}">
+          <div class="document-card-head">
+            <div>
+              <div class="document-card-meta"><span class="category-tag document-kind" th:text="${d.kategorie}"></span><span class="document-source" th:text="${d.quelle}"></span></div>
+              <h4 th:text="${d.titel}"></h4>
+            </div>
+            <button class="button-secondary document-delete" th:attr="data-id=${d.id}" onclick="loeschen(this)">Löschen</button>
+          </div>
+          <p><span th:text="${#strings.length(d.originalText)}">0</span> Zeichen im importierten Dokument</p>
+        </article>
+        <div class="empty-sources" th:if="${#lists.isEmpty(dokumente)}">Noch keine Dokumente in der Wissensbasis.</div>
+      </section>
+    </div>
+  </main>
 </div>
 
 <script>
@@ -58,20 +105,20 @@ document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
   const fd = new FormData(e.target);
   const csrfToken = document.querySelector('meta[name="_csrf"]').content;
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-  const st = document.getElementById('status'); st.classList.remove('hidden'); st.className='mt-4 p-3 rounded text-sm bg-yellow-50'; st.innerText='Parsing + Chunking (650 Tokens, 20% Overlap) + Embedding mit nomic-embed-text...';
+  const st = document.getElementById('status'); st.classList.remove('hidden'); st.className='status-box status-pending'; st.innerText='Parsing + Chunking (650 Tokens, 20% Overlap) + Embedding mit nomic-embed-text...';
   let imported = false;
   try {
     const res = await fetch('/admin/upload',{method:'POST', headers:{[csrfHeader]:csrfToken}, body: fd});
     const data = await res.json();
     if(res.ok && data.success){
       imported = true;
-      st.className='mt-4 p-3 rounded text-sm bg-green-50 border border-green-200'; st.innerText = data.message; document.getElementById('lastImport').innerText = data.titel + ' - ' + data.chunks + ' Chunks';
+      st.className='status-box status-success'; st.innerText = data.message;
       setTimeout(()=>location.reload(),1500);
     } else {
-      st.className='mt-4 p-3 rounded text-sm bg-red-50 border border-red-200'; st.innerText = 'Fehler: ' + (data.error||`HTTP ${res.status}`);
+      st.className='status-box status-error'; st.innerText = 'Fehler: ' + (data.error||`HTTP ${res.status}`);
     }
   } catch (error) {
-    st.className='mt-4 p-3 rounded text-sm bg-red-50 border border-red-200'; st.innerText = 'Fehler beim Import: ' + error.message;
+    st.className='status-box status-error'; st.innerText = 'Fehler beim Import: ' + error.message;
   } finally {
     if (!imported) {
       button.disabled = false;
@@ -82,4 +129,5 @@ document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
 });
 async function loeschen(btn){ if(!confirm('Wirklich löschen? Chunks + Vektoren werden entfernt.')) return; const id=btn.getAttribute('data-id'); const csrfToken=document.querySelector('meta[name="_csrf"]').content; const csrfHeader=document.querySelector('meta[name="_csrf_header"]').content; const res=await fetch('/admin/'+id,{method:'DELETE',headers:{[csrfHeader]:csrfToken}}); location.reload(); }
 </script>
-</body></html>
+</body>
+</html>
