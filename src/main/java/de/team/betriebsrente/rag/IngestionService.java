@@ -32,14 +32,14 @@ public class IngestionService {
             Fachwissen fw = new Fachwissen();
             String title = requiredString(e, "titel");
             String category = requiredString(e, "kategorie");
-            String originalText = e.get("original_text") == null
-                    ? "Titel: " + title + "\nKategorie: " + category
-                    : requiredString(e, "original_text");
+            String originalText = optionalString(e, "original_text",
+                    "Titel: " + title + "\nKategorie: " + category);
+            String quelle = optionalString(e, "quelle", "intern");
             String searchableText = searchableText(originalText, e.get("training_phrases"));
             fw.setTitel(title);
             fw.setKategorie(category);
             fw.setOriginalText(originalText);
-            fw.setQuelle(e.containsKey("quelle") ? requiredString(e, "quelle") : "intern");
+            fw.setQuelle(quelle);
             em.persist(fw);
             em.flush();
             Map<String, Object> meta = new HashMap<>();
@@ -58,6 +58,17 @@ public class IngestionService {
             return text;
         }
         throw new IllegalArgumentException("Missing or non-string seed field: " + key);
+    }
+
+    private String optionalString(Map<String, Object> entry, String key, String fallback) {
+        Object value = entry.get(key);
+        if (value == null) {
+            return fallback;
+        }
+        if (value instanceof String text) {
+            return text;
+        }
+        throw new IllegalArgumentException("Seed field " + key + " must be a string");
     }
 
     private String searchableText(String originalText, Object trainingPhrases) {

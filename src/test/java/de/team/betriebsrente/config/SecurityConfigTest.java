@@ -1,10 +1,10 @@
 package de.team.betriebsrente.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 class SecurityConfigTest {
 
@@ -16,13 +16,14 @@ class SecurityConfigTest {
         config.teamUser = "team-test";
         config.teamPassRaw = "team-password";
 
-        var users = config.users();
+        PasswordEncoder passwordEncoder = config.passwordEncoder();
+        var users = config.users(passwordEncoder);
         UserDetails admin = users.loadUserByUsername("admin-test");
         UserDetails team = users.loadUserByUsername("team-test");
 
-        assertEquals("{noop}admin-password", admin.getPassword());
+        assertTrue(passwordEncoder.matches("admin-password", admin.getPassword()));
         assertTrue(admin.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
-        assertEquals("{noop}team-password", team.getPassword());
+        assertTrue(passwordEncoder.matches("team-password", team.getPassword()));
         assertTrue(team.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
     }
 }

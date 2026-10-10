@@ -45,15 +45,23 @@ docker compose up --build -d app
 
 Wait for the application to finish starting, then open <http://localhost:8080>. The login page is at <http://localhost:8080/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
 
-## UI-E2E-Test
+## UI-E2E-Tests
 
-Der Playwright-Test verwendet Java, TestNG und Mockito. Er prüft den Login und den Chat im Browser; die Chat-Antwort wird über einen Mockito-Stub simuliert, damit der Test kein Ollama-Modell benötigt. PostgreSQL und die App müssen laufen.
+Die Playwright-Tests verwenden Java, TestNG und Mockito. Sie prüfen Chat und Admin-Oberfläche im Browser; Chat-, Upload- und Löschantworten werden simuliert, damit keine Modellantwort oder Dokumentverarbeitung benötigt wird. PostgreSQL und die App müssen laufen.
 
 ```powershell
 $env:E2E_USERNAME = "team"
 $env:E2E_PASSWORD = "Willkommen2024!"
+$env:E2E_ADMIN_USERNAME = "fachbereich"
+$env:E2E_ADMIN_PASSWORD = "Betriebsrente2024!"
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
 mvn -Pe2e -Dexec.mainClass=org.testng.TestNG "-Dexec.args=-testclass de.team.betriebsrente.e2e.ChatUiE2ETest" -Dexec.classpathScope=test test-compile exec:java
+```
+
+Admin-Oberfläche separat ausführen:
+
+```powershell
+mvn -Pe2e -Dexec.mainClass=org.testng.TestNG "-Dexec.args=-testclass de.team.betriebsrente.e2e.AdminUiE2ETest" -Dexec.classpathScope=test test-compile exec:java
 ```
 
 Playwright benötigt Chromium. Einmalig installieren:
@@ -62,7 +70,7 @@ Playwright benötigt Chromium. Einmalig installieren:
 mvn -Pe2e -Dexec.mainClass=com.microsoft.playwright.CLI "-Dexec.args=install chromium" -Dexec.classpathScope=test exec:java
 ```
 
-Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8080`).>. The login page is at <http://localhost:8080/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
+Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8080`).
 
 ### Default local accounts
 
@@ -71,7 +79,7 @@ Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhos
 | Team | `team` | `Willkommen2024!` | Chat |
 | Administrator | `fachbereich` | `Betriebsrente2024!` | Chat and knowledge administration |
 
-These are development defaults, not production credentials. Change them before exposing the service to other users or networks. The current security configuration uses in-memory users and `{noop}` password encoding; it is intended for local development and must be replaced with an appropriate production identity and password setup.
+These are development defaults, not production credentials. Change them before exposing the service to other users or networks. User details are held in memory, and passwords are BCrypt-encoded when the application starts. Use a production identity provider and externalized secrets for a production deployment.
 
 ### Useful Compose commands
 

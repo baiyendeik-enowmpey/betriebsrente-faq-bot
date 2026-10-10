@@ -4,7 +4,7 @@ COPY pom.xml .
 # Cache dependencies separately - don't fail if offline
 RUN mvn dependency:resolve -B || true
 COPY src ./src
-RUN mvn package -DskipTests -B
+RUN mvn package -Dmaven.test.skip=true -B
 
 FROM eclipse-temurin:25-jammy
 RUN apt-get update && apt-get install -y tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng && rm -rf /var/lib/apt/lists/*

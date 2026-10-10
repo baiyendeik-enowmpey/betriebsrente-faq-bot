@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -16,21 +17,26 @@ public class SecurityConfig {
 
     @Value("${app.security.admin-user:fachbereich}")
     String adminUser;
-    @Value("${app.security.admin-pass:Betriebsrente2024!}")
+    @Value("${app.security.admin-pass}")
     String adminPassRaw;
     @Value("${app.security.team-user:team}")
     String teamUser;
-    @Value("${app.security.team-pass:Willkommen2024!}")
+    @Value("${app.security.team-pass}")
     String teamPassRaw;
 
     @Bean
-    public UserDetailsService users() {
+    public PasswordEncoder passwordEncoder() {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public UserDetailsService users(PasswordEncoder passwordEncoder) {
         var admin = User.withUsername(adminUser)
-                .password("{noop}" + adminPassRaw)
+                .password(passwordEncoder.encode(adminPassRaw))
                 .roles("ADMIN", "USER")
                 .build();
         var team = User.withUsername(teamUser)
-                .password("{noop}" + teamPassRaw)
+                .password(passwordEncoder.encode(teamPassRaw))
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(admin, team);
@@ -39,7 +45,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/error", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")

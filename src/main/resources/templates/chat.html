@@ -1,8 +1,53 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Betriebsrente FAQ Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-slate-50 h-screen flex">
-<div class="w-64 bg-white border-r p-4 flex flex-col"><h1 class="font-bold">Betriebsrente Bot</h1><p class="text-xs text-slate-500 mb-6">intern - lokal - pgvector</p><select id="kategorie" class="w-full border rounded p-2 text-sm"><option>Alle</option><option>Auszahlung</option><option>Steuer</option><option>Arbeitgeberwechsel</option></select><div class="mt-8 text-xs text-slate-400"><b>Chunk:</b> 650 Tokens, 20% Overlap<br/>HNSW Cosine</div><form method="post" action="/logout" class="mt-auto"><button type="submit" class="w-full border border-slate-300 rounded px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">Abmelden</button></form></div>
-<div class="flex-1 flex flex-col"><div id="chatverlauf" class="flex-1 overflow-y-auto p-6 space-y-4"></div><div class="p-4 bg-white border-t flex gap-2"><input id="frage" class="flex-1 border rounded-lg p-3" placeholder="Frage z.B. Wie wird Einmalkapital versteuert?" onkeydown="if(event.key==='Enter') senden()"/><button onclick="senden()" class="bg-blue-600 text-white px-6 rounded-lg">Fragen</button></div></div>
+<div class="w-64 bg-white border-r p-4 flex flex-col"><h1 class="font-bold">Betriebsrente Bot</h1><p class="text-xs text-slate-500 mb-6">intern - lokal - pgvector</p><select id="kategorie" class="w-full border rounded p-2 text-sm"><option>Alle</option><option>Auszahlung</option><option>Steuer</option><option>Arbeitgeberwechsel</option></select><div class="mt-8 text-xs text-slate-400"><b>Chunk:</b> 650 Tokens, 20% Overlap<br/>HNSW Cosine</div><a th:if="${isAdmin}" href="/admin" class="mt-auto mb-2 block w-full border border-slate-300 rounded px-3 py-2 text-sm text-center text-slate-700 hover:bg-slate-100">Adminbereich</a><form method="post" action="/logout"><button type="submit" class="w-full border border-slate-300 rounded px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">Abmelden</button></form></div>
+<div class="flex-1 flex flex-col"><div id="chatverlauf" class="flex-1 overflow-y-auto p-6 space-y-4"></div><div class="p-4 bg-white border-t flex gap-2"><input id="frage" class="flex-1 border rounded-lg p-3" placeholder="Frage z.B. Wie wird Einmalkapital versteuert?" onkeydown="if(event.key==='Enter') senden()"/><button id="senden" onclick="senden()" class="bg-blue-600 text-white px-6 rounded-lg disabled:opacity-50 disabled:cursor-wait"><span id="sendenText">Fragen</span><svg id="sendenSpinner" class="hidden animate-spin h-5 w-5 inline-block ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg></button></div></div>
 <div class="w-80 bg-white border-l p-4 overflow-y-auto"><h2 class="font-semibold text-sm">Quellen</h2><div id="quellen" class="mt-3 space-y-3 text-xs"></div></div>
 <script>
-async function senden(){const frage=document.getElementById('frage').value; const kategorie=document.getElementById('kategorie').value; if(!frage) return; const v=document.getElementById('chatverlauf'); v.innerHTML+=`<div class="bg-blue-50 p-3 rounded ml-auto max-w-[70%]"><b>Du:</b> ${frage}</div>`; document.getElementById('frage').value=''; const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({frage,kategorie})}); const data=await res.json(); v.innerHTML+=`<div class="bg-white border p-4 rounded max-w-[80%]"><b>Bot:</b><br><div class="whitespace-pre-wrap mt-2">${data.antwort}</div></div>`; v.scrollTop=v.scrollHeight; document.getElementById('quellen').innerHTML=data.quellen.map(q=>`<div class="border p-2 rounded"><b>${q.titel}</b> <span class="bg-slate-100 px-1 rounded">${q.kategorie}</span><p class="mt-1">${q.text}</p></div>`).join('');}
+async function senden() {
+    const input = document.getElementById('frage');
+    const button = document.getElementById('senden');
+    const frage = input.value.trim();
+    const kategorie = document.getElementById('kategorie').value;
+    if (!frage || button.disabled) return;
+
+    const verlauf = document.getElementById('chatverlauf');
+    verlauf.innerHTML += `<div class="bg-blue-50 p-3 rounded ml-auto max-w-[70%]"><b>Du:</b> ${frage}</div><div id="bot-loading" class="bg-white border p-4 rounded max-w-[80%] flex items-center gap-3 text-slate-600" role="status" aria-live="polite"><svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span>Antwort wird erstellt …</span></div>`;
+    verlauf.scrollTop = verlauf.scrollHeight;
+    input.value = '';
+    input.disabled = true;
+    button.disabled = true;
+    document.getElementById('sendenText').textContent = 'Wird erstellt';
+    document.getElementById('sendenSpinner').classList.remove('hidden');
+
+    const gestartet = performance.now();
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({frage, kategorie})
+        });
+        if (!res.ok) throw new Error(`Chat-Anfrage fehlgeschlagen (${res.status})`);
+        const data = await res.json();
+        const dauerMs = performance.now() - gestartet;
+        const dauer = dauerMs < 1000
+            ? `${Math.round(dauerMs)} ms`
+            : `${(dauerMs / 1000).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})} s`;
+        document.getElementById('bot-loading').remove();
+        verlauf.innerHTML += `<div class="bg-white border p-4 rounded max-w-[80%]"><b>Bot:</b><br><div class="whitespace-pre-wrap mt-2">${data.antwort}</div><p class="text-xs text-slate-500 mt-3">Antwortzeit (inkl. Übertragung): ${dauer}</p></div>`;
+        verlauf.scrollTop = verlauf.scrollHeight;
+        document.getElementById('quellen').innerHTML = data.quellen.map(q => `<div class="border p-2 rounded"><b>${q.titel}</b> <span class="bg-slate-100 px-1 rounded">${q.kategorie}</span><p class="mt-1">${q.text}</p></div>`).join('');
+    } catch (error) {
+        document.getElementById('bot-loading')?.remove();
+        verlauf.innerHTML += '<div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded max-w-[80%]" role="alert"><b>Bot:</b><br>Die Antwort konnte gerade nicht geladen werden. Bitte erneut versuchen.</div>';
+        verlauf.scrollTop = verlauf.scrollHeight;
+        console.error(error);
+    } finally {
+        input.disabled = false;
+        button.disabled = false;
+        document.getElementById('sendenText').textContent = 'Fragen';
+        document.getElementById('sendenSpinner').classList.add('hidden');
+        input.focus();
+    }
+}
 </script></body></html>
