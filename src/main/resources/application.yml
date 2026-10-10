@@ -17,8 +17,9 @@ spring:
       base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
       chat:
         options:
-          model: llama3.1:8b
+          model: llama3.2:3b
           temperature: 0.2
+          num-predict: 128
       embedding:
         options:
           model: nomic-embed-text

@@ -52,9 +52,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login").permitAll()
                         .defaultSuccessUrl("/", true))
-                .logout(l -> l.logoutSuccessUrl("/login?logout").permitAll())
-                .httpBasic(b -> {
-                });
+                .logout(l -> l.logoutSuccessUrl("/login?logout").permitAll());
         return http.build();
     }
 }

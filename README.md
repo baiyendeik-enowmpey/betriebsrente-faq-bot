@@ -14,7 +14,7 @@ A locally hosted, German-language question-answering application for internal te
 - Provides separate team and administrator roles, with an administrator page for uploading and deleting knowledge documents.
 - Includes a logout button in the chat interface.
 
-The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.1:8b` and embedding model `nomic-embed-text`.
+The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.2:3b` and embedding model `nomic-embed-text`.
 
 ## Run with Docker Compose
 
@@ -22,7 +22,7 @@ The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Th
 
 - Docker Desktop (or Docker Engine) with Docker Compose
 - Internet access to download the container images and Ollama models on first setup
-- Sufficient memory and disk space for the models; the `llama3.1:8b` model is several gigabytes
+- Sufficient memory and disk space for the models; the `llama3.2:3b` model is about 2 GB
 
 Start the database and Ollama first:
 
@@ -33,7 +33,7 @@ docker compose up -d postgres ollama
 Download both required models into the persistent Ollama volume:
 
 ```sh
-docker compose exec -T ollama ollama pull llama3.1:8b
+docker compose exec -T ollama ollama pull llama3.2:3b
 docker compose exec -T ollama ollama pull nomic-embed-text
 ```
 
@@ -115,7 +115,7 @@ Install JDK 25, Maven, Docker, and Ollama. Start PostgreSQL and Ollama with Comp
 
 ```sh
 docker compose up -d postgres ollama
-docker compose exec -T ollama ollama pull llama3.1:8b
+docker compose exec -T ollama ollama pull llama3.2:3b
 docker compose exec -T ollama ollama pull nomic-embed-text
 mvn spring-boot:run
 ```
@@ -131,14 +131,14 @@ Default settings are in `src/main/resources/application.yml`; the Compose servic
 | Application URL | `http://localhost:8080` |
 | PostgreSQL database | `betriebsrente` |
 | PostgreSQL user | `botuser` |
-| Chat model | `llama3.1:8b` |
+| Chat model | `llama3.2:3b` |
 | Embedding model | `nomic-embed-text` |
 | Ollama model load timeout | 10 minutes |
 | Chunk size / overlap | 650 tokens / 20% |
 
 Spring configuration can be overridden using its environment-variable equivalents, such as `SPRING_DATASOURCE_URL`, `SPRING_AI_OLLAMA_BASE_URL`, `SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL`, `APP_SECURITY_TEAMUSER`, and `APP_SECURITY_TEAMPASS`. For a Compose deployment, set the corresponding values on the `app` service; keep the database credentials and datasource settings consistent.
 
-For local CPU-only deployments, generating answers with the 8B model can be slow, especially on first load. GPU acceleration or a smaller compatible chat model can improve response time; if changing models, update the Ollama model configuration and ensure the selected models are pulled before asking questions.
+For local CPU-only deployments, `llama3.2:3b` uses less memory than the previous 8B model and can improve response time. First requests can still be slow while Ollama loads the models; GPU acceleration can help further. The embedding model remains `nomic-embed-text` so existing vector entries remain compatible.
 
 ## Build and tests
 

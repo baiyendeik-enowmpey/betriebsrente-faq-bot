@@ -26,7 +26,7 @@ public class RagService {
                 // "keine Fachinfo"
                 SearchRequest req = SearchRequest.builder()
                                 .query(frage == null ? "" : frage)
-                                .topK(6)
+                                .topK(3)
                                 .similarityThreshold(0.35) // niedriger = findet auch bei wenig Daten
                                 .build();
                 List<Document> docs = vectorStore.similaritySearch(req);

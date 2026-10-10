@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Admin - Betriebsrente Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><title>Admin - Betriebsrente Bot</title><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-slate-50 min-h-screen">
 <div class="max-w-6xl mx-auto p-6">
   <div class="flex justify-between items-center mb-8">
@@ -14,7 +14,7 @@
 
   <div class="bg-white rounded-lg border p-6 mb-8">
     <h2 class="font-semibold mb-4">Neues Fachwissen hochladen</h2>
-    <form id="uploadForm" class="space-y-4" enctype="multipart/form-data">
+    <form id="uploadForm" method="post" th:action="@{/admin/upload}" class="space-y-4" enctype="multipart/form-data">
       <div class="border-2 border-dashed rounded-lg p-8 text-center hover:bg-slate-50 cursor-pointer" onclick="document.getElementById('file').click()">
         <input type="file" id="file" name="file" accept=".pdf,.docx,.doc,.txt,.md" class="hidden" onchange="showFile(this)"/>
         <div id="dropText"><p class="font-semibold">PDF / DOCX / TXT hierher ziehen oder klicken</p><p class="text-xs text-slate-400 mt-1">z.B. BetrAVG Auszahlungsrichtlinie, Steuer-Memo, interne FAQ</p></div>
@@ -25,7 +25,10 @@
         <div><label class="text-xs font-semibold">Kategorie *</label><select name="kategorie" class="w-full border rounded p-2 text-sm"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
         <div><label class="text-xs font-semibold">Quelle (Gesetz / Dokument)</label><input name="quelle" class="w-full border rounded p-2 text-sm" placeholder="z.B. BetrAVG §3, EStG §22, FB-Richtlinie"/></div>
       </div>
-      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded w-full font-semibold">Importieren & Chunking starten</button>
+      <button id="uploadButton" type="submit" class="bg-blue-600 text-white px-6 py-2 rounded w-full font-semibold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait">
+        <svg id="uploadSpinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+        <span id="uploadButtonText">Importieren & Chunking starten</span>
+      </button>
     </form>
     <div id="status" class="mt-4 hidden p-3 rounded text-sm"></div>
   </div>
@@ -45,13 +48,38 @@
 function showFile(inp){ if(inp.files[0]){ document.getElementById('fileName').innerText = inp.files[0].name + ' (' + Math.round(inp.files[0].size/1024) + ' KB)'; document.getElementById('fileName').classList.remove('hidden'); document.getElementById('dropText').classList.add('hidden'); } }
 document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
+  const button = document.getElementById('uploadButton');
+  if (button.disabled) return;
+  const spinner = document.getElementById('uploadSpinner');
+  const buttonText = document.getElementById('uploadButtonText');
+  button.disabled = true;
+  spinner.classList.remove('hidden');
+  buttonText.innerText = 'Import läuft…';
   const fd = new FormData(e.target);
+  const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
   const st = document.getElementById('status'); st.classList.remove('hidden'); st.className='mt-4 p-3 rounded text-sm bg-yellow-50'; st.innerText='Parsing + Chunking (650 Tokens, 20% Overlap) + Embedding mit nomic-embed-text...';
-  const res = await fetch('/admin/upload',{method:'POST', body: fd});
-  const data = await res.json();
-  if(data.success){ st.className='mt-4 p-3 rounded text-sm bg-green-50 border border-green-200'; st.innerText = data.message; document.getElementById('lastImport').innerText = data.titel + ' - ' + data.chunks + ' Chunks'; setTimeout(()=>location.reload(),1500); }
-  else{ st.className='mt-4 p-3 rounded text-sm bg-red-50 border border-red-200'; st.innerText = 'Fehler: ' + (data.error||'unbekannt'); }
+  let imported = false;
+  try {
+    const res = await fetch('/admin/upload',{method:'POST', headers:{[csrfHeader]:csrfToken}, body: fd});
+    const data = await res.json();
+    if(res.ok && data.success){
+      imported = true;
+      st.className='mt-4 p-3 rounded text-sm bg-green-50 border border-green-200'; st.innerText = data.message; document.getElementById('lastImport').innerText = data.titel + ' - ' + data.chunks + ' Chunks';
+      setTimeout(()=>location.reload(),1500);
+    } else {
+      st.className='mt-4 p-3 rounded text-sm bg-red-50 border border-red-200'; st.innerText = 'Fehler: ' + (data.error||`HTTP ${res.status}`);
+    }
+  } catch (error) {
+    st.className='mt-4 p-3 rounded text-sm bg-red-50 border border-red-200'; st.innerText = 'Fehler beim Import: ' + error.message;
+  } finally {
+    if (!imported) {
+      button.disabled = false;
+      spinner.classList.add('hidden');
+      buttonText.innerText = 'Importieren & Chunking starten';
+    }
+  }
 });
-async function loeschen(btn){ if(!confirm('Wirklich löschen? Chunks + Vektoren werden entfernt.')) return; const id=btn.getAttribute('data-id'); const res=await fetch('/admin/'+id,{method:'DELETE'}); location.reload(); }
+async function loeschen(btn){ if(!confirm('Wirklich löschen? Chunks + Vektoren werden entfernt.')) return; const id=btn.getAttribute('data-id'); const csrfToken=document.querySelector('meta[name="_csrf"]').content; const csrfHeader=document.querySelector('meta[name="_csrf_header"]').content; const res=await fetch('/admin/'+id,{method:'DELETE',headers:{[csrfHeader]:csrfToken}}); location.reload(); }
 </script>
 </body></html>

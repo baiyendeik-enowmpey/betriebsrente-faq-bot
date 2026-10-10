@@ -3,7 +3,7 @@
 <div class="bg-white rounded-lg p-8 w-96 shadow-xl">
   <h1 class="text-xl font-bold mb-2">Betriebsrente Bot</h1>
   <p class="text-xs text-slate-500 mb-6">Intern - nur Team & Fachbereich<br/>Docker lokal</p>
-  <form method="post" action="/login" class="space-y-4">
+  <form method="post" th:action="@{/login}" class="space-y-4">
     <div><label class="text-xs font-semibold">Benutzer</label><input name="username" class="w-full border rounded p-2 text-sm" placeholder="team oder fachbereich" required/></div>
     <div><label class="text-xs font-semibold">Passwort</label><input type="password" name="password" class="w-full border rounded p-2 text-sm" required/></div>
     <button class="w-full bg-blue-600 text-white py-2 rounded font-semibold">Anmelden</button>
