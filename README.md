@@ -12,7 +12,7 @@ A locally hosted, German-language question-answering application for internal te
 - Splits and indexes document text in PostgreSQL with pgvector for semantic retrieval.
 - Imports the bundled `testdaten/fachwissen_seed.json` knowledge set into an empty database on first startup.
 - Provides separate team and administrator roles, with an administrator page for uploading and deleting knowledge documents.
-- Stores user accounts in PostgreSQL; administrators can create accounts and reset passwords at `/admin/users`.
+- Uses PostgreSQL for sign-in and user/role management; administrators can create accounts and reset passwords at `/admin/users`.
 - Includes a logout button in the chat interface.
 
 The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.2:3b` and embedding model `nomic-embed-text`.
@@ -25,7 +25,7 @@ The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Th
 - Internet access to download the container images and Ollama models on first setup
 - Sufficient memory and disk space for the models; the `llama3.2:3b` model is about 2 GB
 
-Start the database and Ollama first:
+Start PostgreSQL and Ollama:
 
 ```sh
 docker compose up -d postgres ollama
@@ -38,13 +38,7 @@ docker compose exec -T ollama ollama pull llama3.2:3b
 docker compose exec -T ollama ollama pull nomic-embed-text
 ```
 
-Build and start the application:
-
-```sh
-docker compose up --build -d app
-```
-
-Wait for the application to finish starting, then open <http://localhost:8090>. The login page is at <http://localhost:8090/login>. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
+Build and start the application with `docker compose up --build -d app` (or run `./start.sh`). Open <http://localhost:8090> and sign in with a PostgreSQL-backed account. On its first run with an empty database, the application imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
 
 ## UI-E2E-Tests
 

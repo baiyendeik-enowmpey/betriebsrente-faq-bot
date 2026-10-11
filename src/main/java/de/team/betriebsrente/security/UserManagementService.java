@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
@@ -102,7 +103,7 @@ public class UserManagementService {
     private UserDetails loadUser(String username) {
         try {
             return users.loadUserByUsername(username);
-        } catch (RuntimeException ex) {
+        } catch (UsernameNotFoundException ex) {
             throw new IllegalArgumentException("Benutzer nicht gefunden.");
         }
     }
