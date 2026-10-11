@@ -1,45 +1,28 @@
 package de.team.betriebsrente.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.security.admin-user:fachbereich}")
-    String adminUser;
-    @Value("${app.security.admin-pass}")
-    String adminPassRaw;
-    @Value("${app.security.team-user:team}")
-    String teamUser;
-    @Value("${app.security.team-pass}")
-    String teamPassRaw;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public UserDetailsService users(PasswordEncoder passwordEncoder) {
-        var admin = User.withUsername(adminUser)
-                .password(passwordEncoder.encode(adminPassRaw))
-                .roles("ADMIN", "USER")
-                .build();
-        var team = User.withUsername(teamUser)
-                .password(passwordEncoder.encode(teamPassRaw))
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(admin, team);
+    public UserDetailsManager users(DataSource dataSource) {
+        return new JdbcUserDetailsManager(dataSource);
     }
 
     @Bean

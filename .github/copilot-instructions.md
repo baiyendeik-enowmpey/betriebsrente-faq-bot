@@ -25,7 +25,7 @@ This repository is a Spring Boot application with a Maven build. There is no ded
 
 This project is a Spring Boot FAQ assistant for Betriebsrente questions. The app combines a web UI with a retrieval-augmented generation flow backed by PostgreSQL + pgvector and a local Ollama model.
 
-- `src/main/java/de/team/betriebsrente/config/`: Spring Security and authentication setup (in-memory users, roles, and form-based login).
+- `src/main/java/de/team/betriebsrente/config/`: Spring Security and authentication setup (PostgreSQL-backed users, bootstrap accounts, roles, and form-based login).
 - `src/main/java/de/team/betriebsrente/controller/`: HTTP layer for the chat UI and admin endpoints.
 - `src/main/java/de/team/betriebsrente/rag/`: retrieval logic and ingestion pipeline (`RagService`, `IngestionService`, `ChunkingService`, OCR/PDF parsing, audit export, seed-data initializer).
 - `src/main/java/de/team/betriebsrente/model/`: JPA entities such as `Fachwissen` that store the source knowledge in the database.

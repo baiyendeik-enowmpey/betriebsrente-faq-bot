@@ -12,6 +12,7 @@ A locally hosted, German-language question-answering application for internal te
 - Splits and indexes document text in PostgreSQL with pgvector for semantic retrieval.
 - Imports the bundled `testdaten/fachwissen_seed.json` knowledge set into an empty database on first startup.
 - Provides separate team and administrator roles, with an administrator page for uploading and deleting knowledge documents.
+- Stores user accounts in PostgreSQL; administrators can create accounts and reset passwords at `/admin/users`.
 - Includes a logout button in the chat interface.
 
 The application uses Spring Boot, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.2:3b` and embedding model `nomic-embed-text`.
@@ -72,14 +73,14 @@ mvn -Pe2e -Dexec.mainClass=com.microsoft.playwright.CLI "-Dexec.args=install chr
 
 Die App-URL kann mit `E2E_BASE_URL` angepasst werden (Standard: `http://localhost:8090`).
 
-### Default local accounts
+### Initial local accounts
 
 | Role | Username | Password | Access |
 | --- | --- | --- | --- |
 | Team | `team` | `Willkommen2024!` | Chat |
 | Administrator | `fachbereich` | `Betriebsrente2024!` | Chat and knowledge administration |
 
-These are development defaults, not production credentials. Change them before exposing the service to other users or networks. User details are held in memory, and passwords are BCrypt-encoded when the application starts. Use a production identity provider and externalized secrets for a production deployment.
+On the first startup with an empty users table, the app creates these two bootstrap accounts. Usernames and passwords can be supplied with `APP_SECURITY_BOOTSTRAP_ADMIN_USERNAME`, `APP_SECURITY_BOOTSTRAP_ADMIN_PASSWORD`, `APP_SECURITY_BOOTSTRAP_TEAM_USERNAME`, and `APP_SECURITY_BOOTSTRAP_TEAM_PASSWORD`. Configure those values before first startup, especially outside local development. Bootstrap accounts are only created when the users table is empty. Later account changes are stored in PostgreSQL; passwords are BCrypt-hashed. Administrators can create users, reset their passwords, and delete accounts at <http://localhost:8090/admin/users>.
 
 ### Useful Compose commands
 
@@ -136,7 +137,7 @@ Default settings are in `src/main/resources/application.yml`; the Compose servic
 | Ollama model load timeout | 10 minutes |
 | Chunk size / overlap | 650 tokens / 20% |
 
-Spring configuration can be overridden using its environment-variable equivalents, such as `SPRING_DATASOURCE_URL`, `SPRING_AI_OLLAMA_BASE_URL`, `SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL`, `APP_SECURITY_TEAMUSER`, and `APP_SECURITY_TEAMPASS`. For a Compose deployment, set the corresponding values on the `app` service; keep the database credentials and datasource settings consistent.
+Spring configuration can be overridden using its environment-variable equivalents, such as `SPRING_DATASOURCE_URL`, `SPRING_AI_OLLAMA_BASE_URL`, and `SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL`. Set the bootstrap account environment variables before the users table is first created. For Compose, put them in a local `.env` file or set them in the environment; keep the database credentials and datasource settings consistent.
 
 For local CPU-only deployments, `llama3.2:3b` uses less memory than the previous 8B model and can improve response time. First requests can still be slow while Ollama loads the models; GPU acceleration can help further. The embedding model remains `nomic-embed-text` so existing vector entries remain compatible.
 

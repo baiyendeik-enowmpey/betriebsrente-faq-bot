@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Benutzer verwalten · Betriebsrente Bot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="workspace-shell">
+  <aside class="reference-sidebar">
+    <div class="reference-sidebar-head">
+      <div class="reference-brand">
+        <div class="reference-mark" aria-hidden="true">BR</div>
+        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
+        <span class="local-tag">Lokal · Docker</span>
+      </div>
+      <nav class="reference-tabs" aria-label="Bereiche">
+        <a class="reference-tab" th:href="@{/}">◉&nbsp; Chat</a>
+        <a class="reference-tab" th:href="@{/admin}">▤&nbsp; Wissen</a>
+        <a class="reference-tab active" th:href="@{/admin/users}" aria-current="page">♙&nbsp; Benutzer</a>
+      </nav>
+    </div>
+    <section class="reference-section">
+      <span class="reference-section-title">Kontenverwaltung</span>
+      <p class="admin-sidebar-copy">Benutzerkonten werden in PostgreSQL gespeichert und bleiben nach einem Neustart erhalten.</p>
+      <div class="reference-note"><strong>Passwortschutz</strong>Passwörter werden vor dem Speichern mit BCrypt gehasht. Verwenden Sie mindestens 12 Zeichen.</div>
+    </section>
+    <footer class="reference-footer">
+      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
+      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
+    </footer>
+  </aside>
+
+  <main class="reference-main">
+    <header class="reference-pagebar"><h2>Benutzer verwalten</h2><a class="button-secondary" th:href="@{/admin}">Zur Wissensverwaltung</a></header>
+    <div class="admin-reference-content" style="display:block;max-width:1000px">
+      <div th:if="${success}" class="status-box status-success" th:text="${success}"></div>
+      <div th:if="${error}" class="status-box status-error" th:text="${error}"></div>
+
+      <section class="surface-card admin-form-card">
+        <div class="admin-form-title"><div class="reference-mark" aria-hidden="true">＋</div><h3 class="section-heading">Benutzer anlegen</h3></div>
+        <form method="post" th:action="@{/admin/users}">
+          <div class="form-grid">
+            <div class="form-field"><label class="field-label" for="username">Benutzername</label><input id="username" name="username" class="text-field" minlength="3" maxlength="50" required autocomplete="off"></div>
+            <div class="form-field"><label class="field-label" for="password">Temporäres Passwort</label><input id="password" name="password" type="password" class="text-field" minlength="12" required autocomplete="new-password"></div>
+            <div class="form-field"><label class="field-label" for="role">Rolle</label><select id="role" name="role" class="select-field"><option value="USER">Team</option><option value="ADMIN">Administrator</option></select></div>
+          </div>
+          <button type="submit" class="button button-primary">Benutzer anlegen</button>
+        </form>
+      </section>
+
+      <section class="documents-column" style="margin-top:24px">
+        <div class="documents-column-head"><h3>Konten <span th:text="|(${#lists.size(users)})|">(0)</span></h3></div>
+        <article class="document-card" th:each="account : ${users}">
+          <div class="document-card-head">
+            <div>
+              <div class="document-card-meta"><span class="category-tag document-kind" th:text="${account.admin ? 'Administrator' : 'Team'}">Team</span><span class="document-source" th:text="${account.enabled ? 'Aktiv' : 'Deaktiviert'}">Aktiv</span></div>
+              <h4 th:text="${account.username}">username</h4>
+            </div>
+            <form method="post" th:action="@{/admin/users/{username}/delete(username=${account.username})}" onsubmit="return confirm('Dieses Benutzerkonto löschen?')">
+              <button class="button-secondary document-delete" type="submit">Löschen</button>
+            </form>
+          </div>
+          <form method="post" th:action="@{/admin/users/{username}/password(username=${account.username})}" class="form-grid">
+            <div class="form-field"><label class="field-label" th:for="|password-${account.username}|">Neues Passwort setzen</label><input th:id="|password-${account.username}|" name="password" type="password" class="text-field" minlength="12" required autocomplete="new-password"></div>
+            <div class="form-field" style="align-self:end"><button type="submit" class="button-secondary">Passwort ändern</button></div>
+          </form>
+        </article>
+        <div class="empty-sources" th:if="${#lists.isEmpty(users)}">Noch keine Benutzerkonten vorhanden.</div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>
