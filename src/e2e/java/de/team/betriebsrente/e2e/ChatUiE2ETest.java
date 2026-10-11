@@ -114,7 +114,7 @@ public class ChatUiE2ETest {
                 "Source category is shown");
         page.locator("#chatverlauf p")
                 .filter(new Locator.FilterOptions().setHasText(Pattern.compile(
-                        "^Antwortzeit \\(inkl\\. Übertragung\\): (?:\\d+ ms|\\d+,\\d s)$")))
+                        "^Antwortzeit \\(inkl\\. Übertragung\\): (?:\\d+ ms|\\d+,\\d s|\\d+ Min\\. \\d+,\\d s)$")))
                 .waitFor();
         assertTrue(page.locator("#bot-loading").count() == 0, "Loading indicator is removed after the answer");
         verify(ragService).ask(QUESTION, "Steuer");

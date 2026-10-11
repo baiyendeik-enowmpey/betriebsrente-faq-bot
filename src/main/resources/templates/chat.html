@@ -112,9 +112,12 @@ async function senden() {
         if (!res.ok) throw new Error(`Chat-Anfrage fehlgeschlagen (${res.status})`);
         const data = await res.json();
         const dauerMs = performance.now() - gestartet;
+        const dauerSekunden = Math.round(dauerMs / 100) / 10;
         const dauer = dauerMs < 1000
             ? `${Math.round(dauerMs)} ms`
-            : `${(dauerMs / 1000).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})} s`;
+            : dauerSekunden >= 60
+                ? `${Math.floor(dauerSekunden / 60)} Min. ${(dauerSekunden % 60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})} s`
+                : `${dauerSekunden.toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})} s`;
         document.getElementById('bot-loading').remove();
         const quellen = data.quellen.map(q => {
             const chip = document.createElement('span');
