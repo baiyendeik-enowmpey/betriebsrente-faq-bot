@@ -104,6 +104,45 @@ public class AdminUiE2ETest {
     }
 
     @Test
+    public void adminCanDropDocumentIntoUploadArea() {
+        openAdminPage();
+
+        page.locator("#uploadDrop").evaluate("""
+                element => {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(new File(
+                        ['Informationen zur betrieblichen Altersversorgung.'],
+                        'dropped-guide.txt',
+                        { type: 'text/plain' }
+                    ));
+                    element.dispatchEvent(new DragEvent('dragenter', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                    element.dispatchEvent(new DragEvent('dragover', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                    element.dispatchEvent(new DragEvent('dragleave', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                    element.dispatchEvent(new DragEvent('dragenter', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                    element.dispatchEvent(new DragEvent('dragover', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                    element.dispatchEvent(new DragEvent('drop', {
+                        bubbles: true, cancelable: true, dataTransfer: transfer
+                    }));
+                }
+                """);
+
+        assertTrue(page.locator("#fileName").isVisible());
+        assertTrue(page.locator("#fileName").textContent().contains("dropped-guide.txt"));
+        assertEquals(page.locator("#file").evaluate("(input) => input.files[0].name"), "dropped-guide.txt");
+        assertFalse(page.locator("#uploadDrop").getAttribute("class").contains("is-dragging"));
+    }
+
+    @Test
     public void uploadDisplaysSuccessfulImportStatus() {
         openAdminPage();
         page.route("**/admin/upload", route -> route.fulfill(new Route.FulfillOptions()
@@ -177,7 +216,7 @@ public class AdminUiE2ETest {
         page.locator("input[name='password']").fill(ADMIN_PASSWORD);
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Anmelden")).click();
         page.locator("#frage").waitFor();
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Adminbereich")).click();
+        page.locator("a[href='/admin']").click();
         page.locator("#uploadForm").waitFor();
         page.addStyleTag(new Page.AddStyleTagOptions().setContent(".hidden { display: none !important; }"));
     }

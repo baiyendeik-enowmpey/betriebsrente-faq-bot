@@ -51,7 +51,7 @@
         <div class="admin-form-title"><div class="reference-mark" aria-hidden="true">＋</div><h3 class="section-heading">Neues Dokument anlegen</h3></div>
         <p class="section-description" style="margin-top:10px">Dokument importieren und für den Chat durchsuchbar machen.</p>
         <form id="uploadForm" method="post" th:action="@{/admin/upload}" enctype="multipart/form-data">
-          <label class="upload-drop" for="file">
+          <label id="uploadDrop" class="upload-drop" for="file">
             <span aria-hidden="true" style="font-size:22px">↑</span>
             <strong id="dropText">Datei auswählen oder hier ablegen</strong>
             <span>PDF · DOCX · DOC · TXT · MD</span>
@@ -94,6 +94,32 @@
 
 <script>
 function showFile(inp){ if(inp.files[0]){ document.getElementById('fileName').innerText = inp.files[0].name + ' (' + Math.round(inp.files[0].size/1024) + ' KB)'; document.getElementById('fileName').classList.remove('hidden'); document.getElementById('dropText').classList.add('hidden'); } }
+const uploadDrop = document.getElementById('uploadDrop');
+const fileInput = document.getElementById('file');
+let dragDepth = 0;
+uploadDrop.addEventListener('dragenter', (event) => {
+  event.preventDefault();
+  dragDepth++;
+  uploadDrop.classList.add('is-dragging');
+});
+uploadDrop.addEventListener('dragover', (event) => {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
+});
+uploadDrop.addEventListener('dragleave', (event) => {
+  event.preventDefault();
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) uploadDrop.classList.remove('is-dragging');
+});
+uploadDrop.addEventListener('drop', (event) => {
+  event.preventDefault();
+  dragDepth = 0;
+  uploadDrop.classList.remove('is-dragging');
+  if (event.dataTransfer.files.length > 0) {
+    fileInput.files = event.dataTransfer.files;
+    showFile(fileInput);
+  }
+});
 document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const button = document.getElementById('uploadButton');
